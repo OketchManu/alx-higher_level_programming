@@ -1,62 +1,140 @@
 #!/usr/bin/python3
-"""
-nqueens backtracking program to print the coordinates of n queens
-on an nxn grid such that they are all in non-attacking positions
-"""
+'''
+    The N queens puzzle
+    refer to the flowchart file ()
+'''
+import sys
 
 
-from sys import argv
+def init_board(n):
+    '''
+        Initialize an empty chessboard
+        with n rows and n columns filled with spaces (' ')
+    '''
+    board = []
+    [board.append([]) for i in range(n)]
+    [row.append(' ') for i in range(n) for row in board]
+    return board
 
-if __name__ == "__main__":
-    a = []
-    if len(argv) != 2:
-        print("Usage: nqueens N")
-        exit(1)
-    if argv[1].isdigit() is False:
-        print("N must be a number")
-        exit(1)
-    n = int(argv[1])
-    if n < 4:
-        print("N must be at least 4")
-        exit(1)
 
-    # initialize the answer list
-    for i in range(n):
-        a.append([i, None])
+def board_deepcopy(board):
+    '''
+        creates and return a deepcopy of the board
+    '''
+    if isinstance(board, list):
+        return list(map(board_deepcopy, board))
+    return board
 
-    def already_exists(y):
-        """check that a queen does not already exist in that y value"""
-        for x in range(n):
-            if y == a[x][1]:
-                return True
-        return False
 
-    def reject(x, y):
-        """determines whether or not to reject the solution"""
-        if (already_exists(y)):
-            return False
-        i = 0
-        while(i < x):
-            if abs(a[i][1] - y) == abs(i - x):
-                return False
-            i += 1
-        return True
+def get_solution(board):
+    '''
+        retrieve the queens position
+        on the board as list of lists
+    '''
+    solution = []
+    for r in range(len(board)):
+        for c in range(len(board)):
+            if board[r][c] == 'Q':
+                solution.append([r, c])
+                break
+    return solution
 
-    def clear_a(x):
-        """clears the answers from the point of failure on"""
-        for i in range(x, n):
-            a[i][1] = None
 
-    def nqueens(x):
-        """recursive backtracking function to find the solution"""
-        for y in range(n):
-            clear_a(x)
-            if reject(x, y):
-                a[x][1] = y
-                if (x == n - 1):  # accepts the solution
-                    print(a)
-                else:
-                    nqueens(x + 1)  # moves on to next x value to continue
+def xout(board, row, col):
+    '''
+        marks the spot where queens cannot be played
+    '''
 
-    # start the recursive process at x = 0
-    nqueens(0)
+    '''retrieves all forward spots marked as X'''
+    for c in range(col + 1, len(board)):
+        board[row][c] = 'x'
+
+    '''retrieves all backwards spots marked as X'''
+    for c in range(col - 1, -1, -1):
+        board[row][c] = 'x'
+
+    '''retrieves all spots below marked as X'''
+    for r in range(row + 1, len(board)):
+        board[r][col] = 'x'
+
+    '''retrieves all spots above marked as X'''
+    for r in range(row - 1, -1, -1):
+        board[r][col] = 'x'
+
+    '''retrieves all diagonal spots down to right marked as X'''
+    c = col + 1
+    for r in range(row + 1, len(board)):
+        if c >= len(board):
+            break
+        board[r][c] = 'x'
+        c += 1
+
+    '''retrieves all diagonal spots up to left marked as X'''
+    c = col - 1
+    for r in range(row - 1, -1, -1):
+        if c < 0:
+            break
+        board[r][c]
+        c -= 1
+
+    '''retrieves all diagonal spots up to right marked as X'''
+    c = col + 1
+    for r in range(row - 1, -1, -1):
+        if c >= len(board):
+            break
+        board[r][c] = 'x'
+        c += 1
+
+    '''retrieves all diagonal spots down to down marked as X'''
+    c = col - 1
+    for r in range(row + 1, len(board)):
+        if c < 0:
+            break
+        board[r][c] = 'x'
+        c -= 1
+
+
+def recursive_solve(board, row, queens, solutions):
+    '''
+        Recursively solving the N queens
+    '''
+    if queens == len(board):
+        solutions.append(get_solution(board))
+        return solutions
+
+    for c in range(len(board)):
+        if board[row][c] == ' ':
+            # Create a temporary copy of the board
+            tmp_board = board_deepcopy(board)
+            # Place a queen on the board
+            tmp_board[row][c] = 'Q'
+            # Mark spot where queens cannot be placed
+            xout(tmp_board, row, c)
+            # Recursively call the next row
+            solutions = recursive_solve(tmp_board, row + 1,
+                                        queens + 1, solutions)
+
+    return solutions
+
+
+if __name__ == '__main__':
+    # Check the number of args
+    if len(sys.argv) != 2:
+        print('Usage: nqueens N')
+        sys.exit(1)
+
+    # Validate the args as (int(s))
+    if sys.argv[1].isdigit() is False:
+        print('N must be a number')
+        sys.exit(1)
+
+    # Check if N is < 4
+    if int(sys.argv[1]) < 4:
+        print('N must be at least 4')
+        sys.exit(1)
+
+    # initialize board
+    board = init_board(int(sys.argv[1]))
+    solutions = recursive_solve(board, 0, 0, [])
+    for solution in solutions:
+        print(solution)
